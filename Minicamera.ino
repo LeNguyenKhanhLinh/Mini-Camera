@@ -21,8 +21,8 @@ BluetoothSerial SerialBT;
 #define RST   -1
 #define bton 32
 // Since my camera is OV7670 without FIFO, I have to make a manual clock rate
-#define LINE_SIZE 320
-uint8_t lineBuffer[LINE_SIZE];
+#define LINE_SIZE 120
+uint8_t lineBuffer[LINE_SIZE][LINE_SIZE];// square pic
 
 void setup() {
   Serial.begin(115200);
@@ -59,7 +59,7 @@ void loop()
 {
     if(digitalRead(bton) == LOW)
     {
-        captureLine();
+        chupanh();
 
         while(digitalRead(bton) == LOW);
         delay(50);
@@ -106,22 +106,21 @@ uint8_t readByte()
   while(digitalRead(Pclk)==HIGH);
   return data;
 }
-// capture one line of pic
-void captureLine()
-{
-  while(digitalRead(HS) == LOW);
-  for(int i = 0; i < LINE_SIZE; i++)
-  {
-    lineBuffer[i] = readByte();
+// Capture the pic
+void chupanh()
+{  // Vertical frame 
+  while(digitalRead(VS) == HIGH);
+  while(digitalRead(VS) == LOW);
+//Take picture
+  SerialBT.print("START");
+  for(int i = 0; i < 120; i++)
+  {while(digitalRead(HS) == LOW); // Waiting for new row
+    for(int j = 0; j < 120; j++){
+      uint8_t pixel = readByte(); 
+      SerialBT.write(pixel); 
+    }    
+    while(digitalRead(HS) == HIGH);
   }
-  Serial.println("Line captured");
-  for(int i = 0; i < 32; i++)
-  {
-    Serial.print(lineBuffer[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.println();
-}
-void chupanh(){
-
+  SerialBT.print("END");
+  Serial.println("Pics Taken & Sent");
 }
