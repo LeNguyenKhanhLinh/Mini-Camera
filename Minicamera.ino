@@ -33,10 +33,13 @@ void setup() {
   pinMode(bton, INPUT_PULLUP);
   if(digitalRead(bton)==LOW)chupanh();
   //send clockrate to mclk 
-  ledcAttach(Mclk,10000000, 1); //f=10MHz, resolution: 1bit
+  ledcAttach(Mclk,1000000, 1); //f=100000Hz, resolution: 1bit
   ledcWrite(Mclk,1); //high low high low 
   //camera monitor
   Wire.begin(SDA,SCL);
+  writeReg(0x12, 0x80); // reset
+  delay(100);
+  writeReg(0x12, 0x00); // YUV
   // checking if cam work
   delay(1000);
 
@@ -115,9 +118,13 @@ void chupanh()
   SerialBT.print("START");
   for(int i = 0; i < 120; i++)
   {while(digitalRead(HS) == LOW); // Waiting for new row
-    for(int j = 0; j < 120; j++){
-      uint8_t pixel = readByte(); 
-      SerialBT.write(pixel); 
+    for(int j = 0; j < 60; j++){
+      uint8_t Y0 = readByte();
+      readByte();           // bỏ U
+      uint8_t Y1 = readByte();
+      readByte();           // bỏ V
+      SerialBT.write(Y0); 
+      SerialBT.write(Y1); 
     }    
     while(digitalRead(HS) == HIGH);
   }
